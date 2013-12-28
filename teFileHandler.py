@@ -5,7 +5,6 @@ import mimetypes
 import teTextFileParser
 import tePcapFileParser
 
-
 def isFile(filepath):
   #check if file is from allowable type
   filetypes = ['.txt','.log','.csv','.pcap']
@@ -52,12 +51,15 @@ def isPcapFile(filepath):
     return False
 
 def isTextFile(filepath):
-  #determine if the file is a pcap
+  #implement a best guess, if mime says so or ext says so
   mime = mimetypes.guess_type(filepath)
   if 'text/plain' == mime[0]:
     return True
   else:
-    return False
+    if not isPcapFile(filepath):
+      if isFile(filepath):
+        return True
+  return False
 
 def sortFilesByType(files):
   #sorts files by their type, either text or pcap
@@ -70,13 +72,14 @@ def sortFilesByType(files):
       pcapFiles.append(f)
   return {'text':textFiles, 'pcap':pcapFiles}
 
-def getFilesSorted(filepath):
+def getFilesFromFileOrDirectory(filepath,recursive=False):
   #determine what the user gave us, a file or directory?
+  files = []
   if isDirectory(filepath):
-    status,files = getFilesFromDirectory(filepath)
+    status,files = getFilesFromDirectory(filepath,recursive)
   elif isFile(filepath):
     files = [filepath]
-  return sortFilesByType(files)
+  return files
 
 def getStats(sortedFiles):
   stats = [] 
@@ -88,7 +91,6 @@ def getStats(sortedFiles):
       if name != 'filename':
         info[name] = len(data[name])
     stats.append(info)
-    # print data
 
   for f in sortedFiles['text']:
     status, data = teTextFileParser.parseText(f)
